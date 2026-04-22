@@ -1,0 +1,1092 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Bureau Numérique — Classement Factures / Paies / Impôts / TVA</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --panel:#111833;
+      --panel2:#0f1530;
+      --text:#e9ecff;
+      --muted:#aab3e6;
+      --line:#24305a;
+      --accent:#6ee7ff;
+      --good:#3ddc97;
+      --warn:#ffcc66;
+      --bad:#ff6b6b;
+      --shadow: 0 12px 30px rgba(0,0,0,.35);
+      --radius:14px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      background: radial-gradient(1200px 600px at 20% -10%, #1a2a6c33, transparent),
+                  radial-gradient(1000px 500px at 100% 10%, #2b587633, transparent),
+                  var(--bg);
+      color:var(--text);
+    }
+    header{
+      position:sticky; top:0; z-index:10;
+      background: linear-gradient(180deg, rgba(11,16,32,.95), rgba(11,16,32,.65));
+      backdrop-filter: blur(10px);
+      border-bottom:1px solid var(--line);
+    }
+    .wrap{max-width:1200px; margin:0 auto; padding:16px;}
+    .row{display:flex; gap:14px; align-items:center; flex-wrap:wrap;}
+    h1{font-size:18px; margin:0; letter-spacing:.2px}
+    .tag{
+      font-size:12px; color:var(--muted);
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      padding:6px 10px; border-radius:999px;
+    }
+    main .grid{
+      display:grid;
+      grid-template-columns: 320px 1fr;
+      gap:16px;
+      padding:16px;
+      max-width:1200px;
+      margin:0 auto;
+    }
+    @media (max-width: 980px){
+      main .grid{grid-template-columns:1fr;}
+    }
+    .panel{
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .panel .hd{
+      padding:14px 14px 10px;
+      border-bottom:1px solid var(--line);
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      background: rgba(0,0,0,.08);
+    }
+    .panel .hd h2{font-size:14px; margin:0; color:var(--text); font-weight:650;}
+    .panel .bd{padding:14px;}
+    .btn{
+      appearance:none; border:1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      color:var(--text);
+      padding:10px 12px;
+      border-radius:12px;
+      cursor:pointer;
+      font-weight:650;
+    }
+    .btn:hover{border-color:#3a4a86}
+    .btn.primary{
+      background: linear-gradient(180deg, rgba(110,231,255,.22), rgba(110,231,255,.06));
+      border-color: rgba(110,231,255,.35);
+    }
+    .btn.good{
+      background: linear-gradient(180deg, rgba(61,220,151,.25), rgba(61,220,151,.08));
+      border-color: rgba(61,220,151,.45);
+    }
+    .btn.bad{
+      background: linear-gradient(180deg, rgba(255,107,107,.22), rgba(255,107,107,.08));
+      border-color: rgba(255,107,107,.4);
+    }
+    .btn.small{padding:8px 10px; font-size:12px; border-radius:10px;}
+    .btn.inline{padding:6px 10px; font-size:12px; border-radius:10px;}
+    .muted{color:var(--muted)}
+    .mono{font-family:var(--mono)}
+    label{display:block; font-size:12px; color:var(--muted); margin:10px 0 6px;}
+    input, select, textarea{
+      width:100%;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.22);
+      color:var(--text);
+      outline:none;
+    }
+    textarea{min-height:90px; resize:vertical;}
+    .two{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+    }
+    @media (max-width: 520px){
+      .two{grid-template-columns:1fr;}
+    }
+
+    .drawer{
+      display:flex; flex-direction:column; gap:8px;
+    }
+    .drawer button{
+      text-align:left;
+      width:100%;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      color:var(--text);
+      cursor:pointer;
+      font-weight:650;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+    }
+    .drawer button.active{
+      border-color: rgba(110,231,255,.45);
+      background: rgba(110,231,255,.12);
+    }
+    .count{font-size:12px; color:var(--muted); font-weight:700;}
+    .sep{height:1px; background:var(--line); margin:10px 0;}
+    .cards{
+      display:grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap:12px;
+    }
+    @media (max-width: 1100px){
+      .cards{grid-template-columns: repeat(2, minmax(0, 1fr));}
+    }
+    @media (max-width: 720px){
+      .cards{grid-template-columns: 1fr;}
+    }
+    .card{
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:12px;
+      background: rgba(0,0,0,.18);
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      min-height:140px;
+    }
+    .card .top{
+      display:flex; justify-content:space-between; align-items:flex-start; gap:10px;
+    }
+    .pill{
+      display:inline-flex; gap:8px; align-items:center;
+      font-size:12px; padding:5px 9px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      color:var(--muted);
+      background: rgba(255,255,255,.03);
+      white-space:nowrap;
+    }
+    .pill strong{color:var(--text); font-weight:800;}
+    .title{
+      font-size:13px; margin:0; font-weight:800; letter-spacing:.2px;
+    }
+    .meta{
+      font-size:12px; color:var(--muted);
+      display:flex; flex-wrap:wrap; gap:8px;
+    }
+    .meta span{border-bottom:1px dashed rgba(170,179,230,.22)}
+    .actions{
+      margin-top:auto;
+      display:flex; gap:8px; flex-wrap:wrap;
+    }
+
+    .modalBackdrop{
+      position:fixed; inset:0; display:none;
+      background: rgba(0,0,0,.6);
+      backdrop-filter: blur(6px);
+      z-index:50;
+      padding:18px;
+    }
+    .modal{
+      max-width:920px;
+      margin:0 auto;
+      background: rgba(15,21,48,.92);
+      border:1px solid var(--line);
+      border-radius:18px;
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .modal .hd{
+      padding:14px 14px 10px;
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      border-bottom:1px solid var(--line);
+      background: rgba(0,0,0,.12);
+    }
+    .modal .hd h3{margin:0; font-size:14px;}
+    .modal .bd{padding:14px;}
+    .preview{
+      border:1px solid var(--line);
+      border-radius:14px;
+      background: rgba(0,0,0,.18);
+      overflow:hidden;
+      min-height:160px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color:var(--muted);
+      padding:12px;
+    }
+    .preview img{max-width:100%; height:auto; display:block;}
+    .hint{
+      font-size:12px; color:var(--muted);
+      line-height:1.45;
+      border-left: 3px solid rgba(110,231,255,.5);
+      padding-left:10px;
+    }
+    .toast{
+      position:fixed; right:16px; bottom:16px;
+      background: rgba(17,24,51,.95);
+      border:1px solid var(--line);
+      color:var(--text);
+      padding:10px 12px;
+      border-radius:12px;
+      box-shadow: var(--shadow);
+      display:none;
+      max-width:min(420px, calc(100% - 32px));
+      z-index:60;
+      font-size:13px;
+    }
+    .calendarRow{
+      display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;
+    }
+    .kpiRow{
+      display:grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap:12px;
+      margin-bottom:12px;
+    }
+    @media (max-width: 980px){
+      .kpiRow{grid-template-columns: repeat(2, minmax(0, 1fr));}
+    }
+    @media (max-width: 520px){
+      .kpiRow{grid-template-columns: 1fr;}
+    }
+    .kpi{
+      border:1px solid var(--line);
+      border-radius:14px;
+      background: rgba(0,0,0,.18);
+      padding:12px;
+    }
+    .kpi .v{font-size:20px; font-weight:900; letter-spacing:.2px;}
+    .kpi .l{font-size:12px; color:var(--muted); margin-top:4px;}
+    .foot{
+      font-size:12px; color:var(--muted);
+      padding:10px 16px 16px;
+      text-align:center;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="row">
+      <h1>📁 Bureau Numérique — Documents du restaurant</h1>
+      <span class="tag">Classement local (navigateur)</span>
+      <span class="tag">Factures • Paies • Impôts • TVA</span>
+      <span class="tag">Notes écrites & vocales</span>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="grid">
+
+    <!-- Colonne gauche -->
+    <section class="panel">
+      <div class="hd">
+        <h2>🗂️ Tiroirs</h2>
+        <button class="btn small" id="btnNew">+ Ajouter</button>
+      </div>
+      <div class="bd">
+        <div class="drawer" id="drawerBtns"></div>
+
+        <div class="sep"></div>
+
+        <div class="hint">
+          <strong>Organisation (règle simple)</strong><br>
+          1) Tu prends une photo / tu ajoutes un PDF.<br>
+          2) Tu choisis le tiroir, l’entreprise (si facture), la date, le montant.<br>
+          3) Tu peux ajouter une note écrite ou enregistrer une note vocale.<br><br>
+          <span class="muted">Étape suivante plus tard : OCR + classement auto.</span>
+        </div>
+
+        <div class="sep"></div>
+
+        <label>Recherche (texte, entreprise, tags)</label>
+        <input id="q" placeholder="Ex: EDF, TVA, janvier, salaire…" />
+
+        <div class="two">
+          <div>
+            <label>Du</label>
+            <input type="date" id="fromDate"/>
+          </div>
+          <div>
+            <label>Au</label>
+            <input type="date" id="toDate"/>
+          </div>
+        </div>
+
+        <label>Tri</label>
+        <select id="sort">
+          <option value="date_desc">Date (récent → ancien)</option>
+          <option value="date_asc">Date (ancien → récent)</option>
+          <option value="amount_desc">Montant (grand → petit)</option>
+          <option value="amount_asc">Montant (petit → grand)</option>
+          <option value="company_asc">Entreprise (A → Z)</option>
+        </select>
+
+        <div class="sep"></div>
+
+        <div class="row">
+          <button class="btn bad small" id="btnReset">Tout effacer</button>
+          <button class="btn small" id="btnExport">Exporter JSON</button>
+          <label style="margin:0; display:inline-flex; gap:8px; align-items:center; cursor:pointer">
+            <input type="file" id="importFile" accept="application/json" style="display:none" />
+            <span class="btn small">Importer JSON</span>
+          </label>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Colonne droite -->
+    <section class="panel">
+      <div class="hd">
+        <h2>📅 Calendrier & documents</h2>
+        <div class="row">
+          <button class="btn inline" id="btnToday">Aujourd’hui</button>
+          <button class="btn inline" id="btnThisMonth">Ce mois</button>
+          <button class="btn inline" id="btnAll">Tout</button>
+        </div>
+      </div>
+      <div class="bd">
+
+        <div class="kpiRow" id="kpis"></div>
+
+        <div class="calendarRow">
+          <div style="flex:1; min-width:220px">
+            <label>Tiroir actif</label>
+            <div class="pill"><strong id="activeDrawerLabel">—</strong></div>
+          </div>
+          <div style="flex:1; min-width:220px">
+            <label>Résumé période</label>
+            <div class="pill"><span id="periodLabel" class="mono">—</span></div>
+          </div>
+          <div style="flex:1; min-width:220px">
+            <label>Total (montants)</label>
+            <div class="pill"><strong id="sumLabel">0,00 €</strong></div>
+          </div>
+        </div>
+
+        <div class="sep"></div>
+
+        <div class="cards" id="cards"></div>
+
+      </div>
+      <div class="foot">
+        Astuce : pour “Imprimer”, ouvre un document puis utilise <span class="mono">Ctrl/Cmd + P</span> (impression navigateur).
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<!-- Modal: Ajout / édition -->
+<div class="modalBackdrop" id="modalBackdrop">
+  <div class="modal">
+    <div class="hd">
+      <h3 id="modalTitle">Ajouter un document</h3>
+      <button class="btn small" id="btnClose">Fermer</button>
+    </div>
+    <div class="bd">
+      <div class="two">
+        <div>
+          <label>Type / tiroir</label>
+          <select id="docType">
+            <option value="FACTURE">Facture (par entreprise)</option>
+            <option value="PAIE">Fiche de paie</option>
+            <option value="IMPOT">Impôt</option>
+            <option value="TVA">TVA</option>
+          </select>
+
+          <label>Entreprise (si facture)</label>
+          <input id="company" placeholder="Ex: EDF, Orange, Fournisseur X" />
+
+          <div class="two">
+            <div>
+              <label>Date</label>
+              <input type="date" id="docDate"/>
+            </div>
+            <div>
+              <label>Montant (€)</label>
+              <input type="number" step="0.01" id="amount" placeholder="0.00" />
+            </div>
+          </div>
+
+          <label>Tags (séparés par des virgules)</label>
+          <input id="tags" placeholder="Ex: électricité, fournisseur, urgent" />
+
+          <label>Description courte</label>
+          <input id="title" placeholder="Ex: Facture EDF Janvier 2026" />
+
+          <label>Note écrite</label>
+          <textarea id="note" placeholder="Ex: à payer avant le 15, vérifier la TVA…"></textarea>
+        </div>
+
+        <div>
+          <label>Photo / PDF</label>
+          <input type="file" id="file" accept="image/*,application/pdf" />
+          <div class="preview" id="preview">Aperçu ici</div>
+
+          <div class="sep"></div>
+
+          <label>Note vocale</label>
+          <div class="row">
+            <button class="btn good small" id="btnRec">● Enregistrer</button>
+            <button class="btn small" id="btnStop" disabled>■ Stop</button>
+            <button class="btn small" id="btnPlay" disabled>▶ Lire</button>
+            <button class="btn small" id="btnClearAudio" disabled>Effacer audio</button>
+          </div>
+          <div class="hint" style="margin-top:10px">
+            La note vocale est stockée localement (dans ce navigateur).<br>
+            Si tu changes d’ordinateur ou de navigateur, il faudra exporter/importer.
+          </div>
+
+          <div class="sep"></div>
+
+          <div class="row">
+            <button class="btn primary" id="btnSave">Enregistrer</button>
+            <button class="btn bad" id="btnDelete" style="display:none">Supprimer</button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+  const STORAGE_KEY = "bureauNumerique.v1";
+  const fmtEUR = new Intl.NumberFormat("fr-FR", { style:"currency", currency:"EUR" });
+  const todayISO = () => new Date().toISOString().slice(0,10);
+
+  const DRAWERS = [
+    { key:"FACTURE", label:"🧾 Factures", hint:"Classement par entreprise" },
+    { key:"PAIE", label:"👤 Fiches de paie", hint:"Salaires, contrats, attestations" },
+    { key:"IMPOT", label:"🏛️ Impôts", hint:"Avis, prélèvements, IS/IR…" },
+    { key:"TVA", label:"🧮 TVA", hint:"Déclarations, justificatifs" },
+  ];
+
+  /** state */
+  let state = load() ?? {
+    docs: [],
+    activeDrawer: "FACTURE",
+    filters: { q:"", from:"", to:"", sort:"date_desc" }
+  };
+
+  /** DOM */
+  const drawerBtns = document.getElementById("drawerBtns");
+  const cards = document.getElementById("cards");
+  const kpis = document.getElementById("kpis");
+
+  const q = document.getElementById("q");
+  const fromDate = document.getElementById("fromDate");
+  const toDate = document.getElementById("toDate");
+  const sort = document.getElementById("sort");
+
+  const activeDrawerLabel = document.getElementById("activeDrawerLabel");
+  const periodLabel = document.getElementById("periodLabel");
+  const sumLabel = document.getElementById("sumLabel");
+
+  const modalBackdrop = document.getElementById("modalBackdrop");
+  const modalTitle = document.getElementById("modalTitle");
+  const btnClose = document.getElementById("btnClose");
+  const btnNew = document.getElementById("btnNew");
+
+  const docType = document.getElementById("docType");
+  const company = document.getElementById("company");
+  const docDate = document.getElementById("docDate");
+  const amount = document.getElementById("amount");
+  const tags = document.getElementById("tags");
+  const title = document.getElementById("title");
+  const note = document.getElementById("note");
+  const file = document.getElementById("file");
+  const preview = document.getElementById("preview");
+
+  const btnSave = document.getElementById("btnSave");
+  const btnDelete = document.getElementById("btnDelete");
+
+  const btnReset = document.getElementById("btnReset");
+  const btnExport = document.getElementById("btnExport");
+  const importFile = document.getElementById("importFile");
+
+  const btnToday = document.getElementById("btnToday");
+  const btnThisMonth = document.getElementById("btnThisMonth");
+  const btnAll = document.getElementById("btnAll");
+
+  const toast = document.getElementById("toast");
+
+  /** audio recording */
+  let mediaRecorder = null;
+  let audioChunks = [];
+  let currentAudioDataUrl = null;
+  let audioEl = new Audio();
+  const btnRec = document.getElementById("btnRec");
+  const btnStop = document.getElementById("btnStop");
+  const btnPlay = document.getElementById("btnPlay");
+  const btnClearAudio = document.getElementById("btnClearAudio");
+
+  /** editing */
+  let editingId = null;
+  let currentFileData = null; // {name,type,dataUrl}
+
+  function uid(){
+    return "doc_" + Math.random().toString(16).slice(2) + "_" + Date.now().toString(16);
+  }
+
+  function load(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch(e){ return null; }
+  }
+  function save(){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }
+  function toastMsg(msg){
+    toast.textContent = msg;
+    toast.style.display = "block";
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => toast.style.display = "none", 2200);
+  }
+
+  function drawerLabel(key){
+    return DRAWERS.find(d => d.key === key)?.label ?? key;
+  }
+
+  function renderDrawer(){
+    drawerBtns.innerHTML = "";
+    for(const d of DRAWERS){
+      const count = state.docs.filter(x => x.type === d.key).length;
+      const b = document.createElement("button");
+      b.className = (state.activeDrawer === d.key) ? "active" : "";
+      b.innerHTML = `<span>${d.label}<div class="muted" style="font-weight:650; font-size:12px; margin-top:2px">${d.hint}</div></span>
+                     <span class="count">${count}</span>`;
+      b.addEventListener("click", () => {
+        state.activeDrawer = d.key;
+        save();
+        render();
+      });
+      drawerBtns.appendChild(b);
+    }
+  }
+
+  function withinDate(doc){
+    const d = doc.date || "";
+    const from = state.filters.from || "";
+    const to = state.filters.to || "";
+    if(from && d < from) return false;
+    if(to && d > to) return false;
+    return true;
+  }
+
+  function matchesQuery(doc){
+    const query = (state.filters.q || "").trim().toLowerCase();
+    if(!query) return true;
+    const hay = [
+      doc.title, doc.company, doc.note,
+      (doc.tags || []).join(" "),
+      doc.type
+    ].filter(Boolean).join(" ").toLowerCase();
+    return hay.includes(query);
+  }
+
+  function sortDocs(list){
+    const s = state.filters.sort;
+    const copy = [...list];
+    const amountVal = x => Number(x.amount ?? 0);
+    if(s === "date_desc") copy.sort((a,b) => (b.date||"").localeCompare(a.date||""));
+    if(s === "date_asc") copy.sort((a,b) => (a.date||"").localeCompare(b.date||""));
+    if(s === "amount_desc") copy.sort((a,b) => amountVal(b) - amountVal(a));
+    if(s === "amount_asc") copy.sort((a,b) => amountVal(a) - amountVal(b));
+    if(s === "company_asc") copy.sort((a,b) => (a.company||"").localeCompare(b.company||""));
+    return copy;
+  }
+
+  function filteredDocs(){
+    return sortDocs(state.docs
+      .filter(d => d.type === state.activeDrawer)
+      .filter(withinDate)
+      .filter(matchesQuery)
+    );
+  }
+
+  function computeKpis(){
+    const all = state.docs.filter(withinDate).filter(matchesQuery);
+    const byType = (t) => all.filter(x => x.type === t);
+    const sum = (arr) => arr.reduce((acc,x) => acc + Number(x.amount || 0), 0);
+
+    const items = [
+      { label:"Documents (période)", value: all.length },
+      { label:"Factures", value: byType("FACTURE").length },
+      { label:"TVA", value: byType("TVA").length },
+      { label:"Total montants (période)", value: fmtEUR.format(sum(all)) }
+    ];
+    kpis.innerHTML = "";
+    for(const it of items){
+      const div = document.createElement("div");
+      div.className = "kpi";
+      div.innerHTML = `<div class="v">${it.value}</div><div class="l">${it.label}</div>`;
+      kpis.appendChild(div);
+    }
+  }
+
+  function renderCards(){
+    const list = filteredDocs();
+    cards.innerHTML = "";
+    if(list.length === 0){
+      cards.innerHTML = `<div class="muted">Aucun document ici. Clique sur <strong>+ Ajouter</strong> pour ranger ta première facture/TVA/paie/impôt.</div>`;
+      return;
+    }
+
+    for(const d of list){
+      const el = document.createElement("div");
+      el.className = "card";
+
+      const date = d.date ? d.date.split("-").reverse().join("/") : "—";
+      const amt = (d.amount !== null && d.amount !== undefined && d.amount !== "") ? fmtEUR.format(Number(d.amount)) : "—";
+      const tagsTxt = (d.tags && d.tags.length) ? d.tags.join(", ") : "—";
+      const companyTxt = d.type === "FACTURE" ? (d.company || "Entreprise non renseignée") : "—";
+
+      el.innerHTML = `
+        <div class="top">
+          <div>
+            <p class="title">${escapeHtml(d.title || "(Sans titre)")}</p>
+            <div class="meta">
+              <span>📅 ${date}</span>
+              <span>💶 ${amt}</span>
+              ${d.type === "FACTURE" ? `<span>🏷️ ${escapeHtml(companyTxt)}</span>` : `<span>🏷️ ${drawerLabel(d.type)}</span>`}
+            </div>
+          </div>
+          <span class="pill"><strong>${drawerLabel(d.type)}</strong></span>
+        </div>
+        <div class="meta">
+          <span>Tags: ${escapeHtml(tagsTxt)}</span>
+          <span>${d.file ? ("📎 " + escapeHtml(d.file.name)) : "📎 aucun fichier"}</span>
+          <span>${d.audio ? "🎙️ note vocale" : "🎙️ —"}</span>
+        </div>
+        <div class="actions">
+          <button class="btn small" data-act="open">Ouvrir</button>
+          <button class="btn small" data-act="download" ${d.file ? "" : "disabled"}>Télécharger</button>
+          <button class="btn small" data-act="email">Email</button>
+          <button class="btn small" data-act="wa">WhatsApp</button>
+        </div>
+      `;
+
+      el.querySelector('[data-act="open"]').addEventListener("click", () => openModal(d.id));
+      el.querySelector('[data-act="download"]').addEventListener("click", () => downloadFile(d));
+      el.querySelector('[data-act="email"]').addEventListener("click", () => shareEmail(d));
+      el.querySelector('[data-act="wa"]').addEventListener("click", () => shareWhatsApp(d));
+
+      cards.appendChild(el);
+    }
+  }
+
+  function renderSummary(){
+    activeDrawerLabel.textContent = drawerLabel(state.activeDrawer);
+
+    const f = state.filters.from || "—";
+    const t = state.filters.to || "—";
+    periodLabel.textContent = `${f} → ${t}`;
+
+    const list = filteredDocs();
+    const total = list.reduce((acc,x) => acc + Number(x.amount || 0), 0);
+    sumLabel.textContent = fmtEUR.format(total);
+  }
+
+  function render(){
+    renderDrawer();
+    q.value = state.filters.q;
+    fromDate.value = state.filters.from;
+    toDate.value = state.filters.to;
+    sort.value = state.filters.sort;
+
+    computeKpis();
+    renderSummary();
+    renderCards();
+  }
+
+  /** Modal */
+  function resetModal(){
+    editingId = null;
+    modalTitle.textContent = "Ajouter un document";
+    btnDelete.style.display = "none";
+
+    docType.value = state.activeDrawer || "FACTURE";
+    company.value = "";
+    docDate.value = todayISO();
+    amount.value = "";
+    tags.value = "";
+    title.value = "";
+    note.value = "";
+    file.value = "";
+    preview.textContent = "Aperçu ici";
+    currentFileData = null;
+
+    currentAudioDataUrl = null;
+    btnPlay.disabled = true;
+    btnClearAudio.disabled = true;
+  }
+
+  function openModal(id=null){
+    modalBackdrop.style.display = "block";
+    resetModal();
+
+    if(id){
+      const d = state.docs.find(x => x.id === id);
+      if(!d) return;
+      editingId = id;
+      modalTitle.textContent = "Ouvrir / modifier";
+      btnDelete.style.display = "inline-block";
+
+      docType.value = d.type;
+      company.value = d.company || "";
+      docDate.value = d.date || todayISO();
+      amount.value = (d.amount ?? "");
+      tags.value = (d.tags || []).join(", ");
+      title.value = d.title || "";
+      note.value = d.note || "";
+      currentFileData = d.file || null;
+      currentAudioDataUrl = d.audio || null;
+
+      renderPreviewFromFile(currentFileData);
+
+      btnPlay.disabled = !currentAudioDataUrl;
+      btnClearAudio.disabled = !currentAudioDataUrl;
+    }
+  }
+  function closeModal(){
+    modalBackdrop.style.display = "none";
+    stopRecordingIfNeeded();
+    audioEl.pause();
+  }
+
+  btnNew.addEventListener("click", () => openModal());
+  btnClose.addEventListener("click", closeModal);
+  modalBackdrop.addEventListener("click", (e) => {
+    if(e.target === modalBackdrop) closeModal();
+  });
+
+  /** File preview */
+  file.addEventListener("change", async () => {
+    const f = file.files?.[0];
+    if(!f){
+      currentFileData = null;
+      preview.textContent = "Aperçu ici";
+      return;
+    }
+    const dataUrl = await fileToDataUrl(f);
+    currentFileData = { name: f.name, type: f.type, dataUrl };
+    renderPreviewFromFile(currentFileData);
+
+    // petit auto-titre si vide
+    if(!title.value.trim()){
+      title.value = suggestTitle();
+    }
+  });
+
+  function suggestTitle(){
+    const t = docType.value;
+    const comp = company.value.trim();
+    const date = docDate.value || todayISO();
+    const frDate = date.split("-").reverse().join("/");
+    if(t === "FACTURE") return `Facture ${comp || "Entreprise"} — ${frDate}`;
+    if(t === "PAIE") return `Fiche de paie — ${frDate}`;
+    if(t === "IMPOT") return `Impôt — ${frDate}`;
+    if(t === "TVA") return `TVA — ${frDate}`;
+    return `Document — ${frDate}`;
+  }
+
+  function renderPreviewFromFile(f){
+    preview.innerHTML = "";
+    if(!f){
+      preview.textContent = "Aperçu ici";
+      return;
+    }
+    if((f.type || "").includes("pdf")){
+      preview.innerHTML = `<div style="text-align:center">
+        <div style="font-size:42px">📄</div>
+        <div class="muted">${escapeHtml(f.name)}</div>
+        <div class="muted" style="font-size:12px; margin-top:6px">PDF stocké localement</div>
+      </div>`;
+      return;
+    }
+    if((f.type || "").startsWith("image/")){
+      const img = document.createElement("img");
+      img.src = f.dataUrl;
+      img.alt = f.name;
+      preview.appendChild(img);
+      return;
+    }
+    preview.innerHTML = `<div class="muted">Fichier: ${escapeHtml(f.name)}</div>`;
+  }
+
+  function fileToDataUrl(f){
+    return new Promise((res, rej) => {
+      const r = new FileReader();
+      r.onload = () => res(r.result);
+      r.onerror = rej;
+      r.readAsDataURL(f);
+    });
+  }
+
+  /** Audio */
+  btnRec.addEventListener("click", startRecording);
+  btnStop.addEventListener("click", stopRecording);
+  btnPlay.addEventListener("click", () => {
+    if(!currentAudioDataUrl) return;
+    audioEl.src = currentAudioDataUrl;
+    audioEl.play();
+  });
+  btnClearAudio.addEventListener("click", () => {
+    currentAudioDataUrl = null;
+    btnPlay.disabled = true;
+    btnClearAudio.disabled = true;
+    toastMsg("Note vocale effacée.");
+  });
+
+  async function startRecording(){
+    try{
+      const stream = await navigator.mediaDevices.getUserMedia({ audio:true });
+      audioChunks = [];
+      mediaRecorder = new MediaRecorder(stream);
+      mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+      mediaRecorder.onstop = async () => {
+        const blob = new Blob(audioChunks, { type:"audio/webm" });
+        const dataUrl = await blobToDataUrl(blob);
+        currentAudioDataUrl = dataUrl;
+        btnPlay.disabled = false;
+        btnClearAudio.disabled = false;
+        toastMsg("Note vocale enregistrée.");
+        // stop tracks
+        stream.getTracks().forEach(t => t.stop());
+      };
+      mediaRecorder.start();
+      btnRec.disabled = true;
+      btnStop.disabled = false;
+      toastMsg("Enregistrement…");
+    } catch(err){
+      console.error(err);
+      toastMsg("Micro refusé ou indisponible.");
+    }
+  }
+
+  function stopRecording(){
+    if(mediaRecorder && mediaRecorder.state !== "inactive"){
+      mediaRecorder.stop();
+    }
+    btnRec.disabled = false;
+    btnStop.disabled = true;
+  }
+
+  function stopRecordingIfNeeded(){
+    if(mediaRecorder && mediaRecorder.state !== "inactive"){
+      stopRecording();
+    }
+    btnRec.disabled = false;
+    btnStop.disabled = true;
+  }
+
+  function blobToDataUrl(blob){
+    return new Promise((res, rej) => {
+      const r = new FileReader();
+      r.onload = () => res(r.result);
+      r.onerror = rej;
+      r.readAsDataURL(blob);
+    });
+  }
+
+  /** Save / delete */
+  btnSave.addEventListener("click", () => {
+    const t = docType.value;
+    const d = {
+      id: editingId ?? uid(),
+      type: t,
+      company: (t === "FACTURE") ? company.value.trim() : "",
+      date: docDate.value || todayISO(),
+      amount: amount.value === "" ? null : Number(amount.value),
+      tags: tags.value.split(",").map(s => s.trim()).filter(Boolean),
+      title: title.value.trim() || suggestTitle(),
+      note: note.value.trim(),
+      file: currentFileData,
+      audio: currentAudioDataUrl,
+      createdAt: editingId ? undefined : new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    // règle: une facture doit avoir entreprise (sinon warning)
+    if(t === "FACTURE" && !d.company){
+      if(!confirm("Facture sans entreprise. Continuer quand même ?")){
+        return;
+      }
+    }
+
+    // upsert
+    const idx = state.docs.findIndex(x => x.id === d.id);
+    if(idx >= 0){
+      state.docs[idx] = { ...state.docs[idx], ...d };
+      toastMsg("Document mis à jour.");
+    } else {
+      state.docs.push(d);
+      toastMsg("Document ajouté.");
+    }
+
+    state.activeDrawer = d.type;
+    save();
+    render();
+    closeModal();
+  });
+
+  btnDelete.addEventListener("click", () => {
+    if(!editingId) return;
+    if(!confirm("Supprimer ce document ?")) return;
+    state.docs = state.docs.filter(x => x.id !== editingId);
+    save();
+    render();
+    closeModal();
+    toastMsg("Document supprimé.");
+  });
+
+  /** Filters */
+  q.addEventListener("input", () => { state.filters.q = q.value; save(); render(); });
+  fromDate.addEventListener("change", () => { state.filters.from = fromDate.value; save(); render(); });
+  toDate.addEventListener("change", () => { state.filters.to = toDate.value; save(); render(); });
+  sort.addEventListener("change", () => { state.filters.sort = sort.value; save(); render(); });
+
+  btnToday.addEventListener("click", () => {
+    const t = todayISO();
+    state.filters.from = t;
+    state.filters.to = t;
+    save(); render();
+  });
+  btnThisMonth.addEventListener("click", () => {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth()+1).padStart(2,"0");
+    const first = `${y}-${m}-01`;
+    const last = new Date(y, now.getMonth()+1, 0).toISOString().slice(0,10);
+    state.filters.from = first;
+    state.filters.to = last;
+    save(); render();
+  });
+  btnAll.addEventListener("click", () => {
+    state.filters.from = "";
+    state.filters.to = "";
+    save(); render();
+  });
+
+  /** Export / import */
+  btnExport.addEventListener("click", () => {
+    const blob = new Blob([JSON.stringify(state, null, 2)], { type:"application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "bureau-numerique-export.json";
+    a.click();
+    URL.revokeObjectURL(url);
+    toastMsg("Export JSON téléchargé.");
+  });
+
+  importFile.addEventListener("change", async () => {
+    const f = importFile.files?.[0];
+    if(!f) return;
+    try{
+      const txt = await f.text();
+      const data = JSON.parse(txt);
+      if(!data || !Array.isArray(data.docs)) throw new Error("Format invalide");
+      state = data;
+      save();
+      render();
+      toastMsg("Import réussi.");
+    } catch(e){
+      console.error(e);
+      toastMsg("Import impossible (JSON invalide).");
+    } finally {
+      importFile.value = "";
+    }
+  });
+
+  btnReset.addEventListener("click", () => {
+    if(!confirm("Tout effacer (documents + réglages) ?")) return;
+    localStorage.removeItem(STORAGE_KEY);
+    state = {
+      docs: [],
+      activeDrawer: "FACTURE",
+      filters: { q:"", from:"", to:"", sort:"date_desc" }
+    };
+    render();
+    toastMsg("Tout a été effacé.");
+  });
+
+  /** Share */
+  function shareEmail(d){
+    const subject = encodeURIComponent(`[${drawerLabel(d.type)}] ${d.title || "Document"}`);
+    const lines = [];
+    lines.push(`Titre: ${d.title || ""}`);
+    lines.push(`Type: ${drawerLabel(d.type)}`);
+    if(d.type === "FACTURE") lines.push(`Entreprise: ${d.company || ""}`);
+    lines.push(`Date: ${d.date || ""}`);
+    lines.push(`Montant: ${d.amount != null ? fmtEUR.format(Number(d.amount)) : ""}`);
+    lines.push(`Tags: ${(d.tags || []).join(", ")}`);
+    lines.push("");
+    lines.push(d.note || "");
+    lines.push("");
+    lines.push("⚠️ Pièce jointe: ouvre le document dans l'app puis clique sur Télécharger pour l'ajouter à l'email.");
+    const body = encodeURIComponent(lines.join("\n"));
+    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+  }
+
+  function shareWhatsApp(d){
+    const textLines = [];
+    textLines.push(`[${drawerLabel(d.type)}] ${d.title || "Document"}`);
+    if(d.type === "FACTURE") textLines.push(`Entreprise: ${d.company || ""}`);
+    textLines.push(`Date: ${d.date || ""}`);
+    if(d.amount != null) textLines.push(`Montant: ${fmtEUR.format(Number(d.amount))}`);
+    if(d.tags && d.tags.length) textLines.push(`Tags: ${d.tags.join(", ")}`);
+    if(d.note) textLines.push(`Note: ${d.note}`);
+    textLines.push("");
+    textLines.push("Pièce jointe: télécharge le fichier depuis l'app, puis ajoute-le dans WhatsApp.");
+    const text = encodeURIComponent(textLines.join("\n"));
+    // wa.me fonctionne sur mobile et desktop (web.whatsapp)
+    window.open(`https://wa.me/?text=${text}`, "_blank");
+  }
+
+  function downloadFile(d){
+    if(!d.file) return;
+    const a = document.createElement("a");
+    a.href = d.file.dataUrl;
+    a.download = d.file.name || "document";
+    a.click();
+    toastMsg("Téléchargement lancé.");
+  }
+
+  /** Helpers */
+  function escapeHtml(s){
+    return String(s)
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+
+  /** init defaults */
+  // restore filters into DOM
+  render();
+})();
+</script>
+
+</body>
+</html>
